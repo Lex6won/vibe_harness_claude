@@ -1,0 +1,43 @@
+# 승인 Track 정의 — 플랫폼 4-Track 매핑 (포크 금지)
+# solution-architect가 자동 선정. 미승인은 거절이 아니라 선회 코칭.
+
+tracks:
+  local-automation:
+    등급: 1  # 개인 도구
+    용도: 개인 PC 자동화·파일 정리
+    선정: 자동
+  streamlit-internal:
+    플랫폼: Track S
+    용도: 내부 대시보드·분석 도구
+    선정: 자동
+    제약: "내부 한정 — 외부망/대민 금지"
+  fastapi-web:
+    플랫폼: Track A
+    용도: 표준 내부 웹서비스 (기본값)
+    선정: 자동(기본)
+    스택: Python 3.12 + FastAPI + Jinja2/HTMX
+  react-fastapi:
+    플랫폼: Track B
+    용도: 화면이 복잡한 서비스
+    선정: 조건(화면 복잡성)
+    스택: React(Vite)+TS 정적빌드 + FastAPI API
+  node-api:
+    플랫폼: Track N
+    용도: Node 백엔드
+    선정: "숨김 — 사용자가 정당 사유(기존 TS 재사용·Lovable 포팅) 언급 시만"
+    제약: "승인 템플릿(gg-node-api), 서버용 npm 화이트리스트, 대민은 팀단 재심사"
+
+denied:                 # 미승인 → 가까운 승인 Track + 선회 방법 코칭
+  - stack: Next.js SSR
+    선회: "정적 export는 Track B로 흡수, SSR은 2단계 재검토"
+  - stack: [Spring Boot, Django, Flask]
+    선회: "Flask→FastAPI 선회 안내"
+  - stack: [supabase-js 직접, firebase]
+    선회: "DB→PostgreSQL, Auth→Keycloak 치환, 데이터 호출은 api 계층 분리"
+  - stack: PHP
+    선회: 표준 외
+
+runtime_fixed:          # runtime-env.yaml과 일치
+  python: "3.12"
+  node: "20"
+  postgresql: "16"

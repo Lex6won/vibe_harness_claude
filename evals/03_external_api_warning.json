@@ -1,0 +1,27 @@
+{
+  "id": "03_external_api_warning",
+  "name": "행정망 + 외부 API 호출 → 예외신청 경로 안내",
+  "purpose": "행정망 존에서 외부통신 코드를 gvskb가 탐지하고, 코칭이 차단이 아니라 예외신청으로 안내하는지 검증",
+  "input": {
+    "user_request": "회의록 요약해주는 내부 도구 만들어줘",
+    "audience": "직원만",
+    "sample_code": "src/summarize.py",
+    "sample_code_content": "import httpx\nresp = httpx.post('https://api.openai.com/v1/chat/completions', json=payload)"
+  },
+  "expected": {
+    "zone": "internal",
+    "gvskb_profile": "internal-db-query",
+    "gvskb_verdict": "block",
+    "expected_findings": ["GOV-INTERNAL-NET-001"],
+    "reviewer_action": "외부통신 발견 → 코칭으로 예외신청 경로 안내",
+    "coaching_contains": ["행정망에선 동작하지 않아요", "외부통신 예외신청", "/예외신청"],
+    "alternative": "망연계 프록시 / DMZ 중계 / 내부 sLLM (closed-network.md)",
+    "manifest_checks": { "gvskb_verdict": "block", "external_network": "block" },
+    "exception_path": "deployment-clerk가 05_예외신청서 생성 유도 (사유·대체수단·영향범위·담당)"
+  },
+  "pass_criteria": [
+    "external_surface/GOV-INTERNAL-NET-001로 외부통신 탐지",
+    "코칭이 '안 됨'이 아니라 대체·예외신청 동반",
+    "설계 답변(행정망)과 코드(외부호출) 불일치를 게이트가 잡음"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "vibecode-manifest",
+  "description": "gg-vibecode 증거 체인. 각 단계가 갱신하고 배포신청·서버측 사후스캔의 근거가 된다.",
+  "type": "object",
+  "required": ["project_id", "harness_version", "audience", "service_zone", "artifacts", "checks"],
+  "properties": {
+    "project_id": { "type": "string" },
+    "harness_version": { "type": "string", "examples": ["gg-vibecode 0.1"] },
+    "audience": { "enum": ["직원만", "타기관공무원", "시민"] },
+    "service_zone": { "enum": ["internal", "external"] },
+    "data_level": { "enum": ["green", "yellow", "red"] },
+    "track": {
+      "enum": ["local-automation", "streamlit-internal", "fastapi-web", "react-fastapi", "node-api"]
+    },
+    "auth": { "type": "string", "examples": ["keycloak-oidc", "citizen+admin-idpw"] },
+    "checker": {
+      "type": "object",
+      "properties": {
+        "tool": { "const": "vibecode-checker" },
+        "version": { "type": "string" },
+        "profile": {
+          "enum": ["internal-db-query", "web-civil-service", "civil-complaint-chatbot", "public-default-strict"]
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "properties": {
+        "plan": { "type": "string" },
+        "design": { "type": "string" },
+        "check": { "type": "string" },
+        "submit": { "type": "string" }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "description": "gvskb 원본 키를 그대로 기록(위변조 무력화)",
+      "properties": {
+        "gvskb_verdict": { "enum": ["ok", "block", "warn", "none"] },
+        "block_count": { "type": "integer" },
+        "warn_count": { "type": "integer" },
+        "secret_scan": { "enum": ["block", "warn", "allow"] },
+        "pii": { "enum": ["block", "warn", "allow"] },
+        "external_network": { "enum": ["block", "warn", "allow"] }
+      }
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["item", "reason", "approved_by", "expires"],
+        "properties": {
+          "item": { "type": "string" },
+          "reason": { "type": "string" },
+          "approved_by": { "type": "string" },
+          "expires": { "type": "string" }
+        }
+      }
+    }
+  }
+}

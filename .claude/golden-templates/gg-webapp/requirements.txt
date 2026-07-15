@@ -1,0 +1,8 @@
+# package-catalog.yaml(python) 안에서만. 오프라인 미러 재현성 위해 고정.
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+pydantic==2.*
+jinja2==3.*
+sqlalchemy==2.*
+psycopg[binary]==3.*
+authlib==1.*

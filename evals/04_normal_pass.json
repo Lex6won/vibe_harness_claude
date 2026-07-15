@@ -1,0 +1,29 @@
+{
+  "id": "04_normal_pass",
+  "name": "표준 내부 대시보드 → 정상 통과·배포신청",
+  "purpose": "위험 없는 표준 템플릿이 게이트를 통과해 deployment-clerk로 이어지고 산출물·manifest가 완결되는지 검증",
+  "input": {
+    "user_request": "부서 예산 집행 현황 대시보드 만들어줘",
+    "audience": "직원만",
+    "sample_code": "src/app.py",
+    "sample_code_content": "import streamlit as st\nimport pandas as pd\ndf = pd.read_csv('data/budget_sample.csv')  # 공개 통계, 더미\nst.dataframe(df)"
+  },
+  "expected": {
+    "zone": "internal",
+    "data_level": "green",
+    "track": "streamlit-internal",
+    "gvskb_profile": "internal-db-query",
+    "gvskb_verdict": "ok",
+    "expected_findings": [],
+    "reviewer_action": "코칭 '검사 통과' 후 deployment-clerk로 핸드오프",
+    "deployment": "04_배포신청서 자동생성 (직원만 → 표준 내부심사)",
+    "artifacts_complete": ["01_요구서.md", "02_설계서.md", "03_검증보고서.md", "vibecode-manifest.json"],
+    "manifest_checks": { "gvskb_verdict": "ok", "block_count": 0 }
+  },
+  "pass_criteria": [
+    "배포판정 ok",
+    "Track S가 내부(직원만)라서 허용됨 (대민이면 금지였을 것)",
+    "산출물 4종 + manifest 완결",
+    "게이트가 green이라 경량으로 빠르게 통과(과잉 차단 없음)"
+  ]
+}

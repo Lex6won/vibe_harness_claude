@@ -1,0 +1,26 @@
+# 운영 환경 사양 — 기계판정 (solution-architect·builder·security-reviewer 공용)
+# AI가 사양 밖 코드를 만들 여지를 개발 시점에 차단.
+
+runtime:
+  python: "3.12"        # 상위 버전 문법 금지
+  node: "20"
+  postgresql: "16"
+  승인_확장: [pgcrypto, pg_trgm, uuid-ossp, pgvector]
+
+container:
+  cpu: 1                # 프로젝트 기본 쿼터 — 초과 필요 시 예외 신청
+  memory_gb: 2          # 대용량 일괄처리는 분할·스트리밍 설계
+  storage: "컨테이너 무상태 → 파일은 지정 볼륨만"
+
+routing:
+  base_path: "/apps/<project>/"   # SPA basename·정적 경로 필수 반영
+  port_range: "10001-10999"
+  health: "/health 필수"
+
+logging: "표준출력만 (journald 수집) — 파일 로그 금지"
+secrets: "환경변수 주입 (podman secret) — 코드·저장소 포함 금지"
+
+base_images:            # Dockerfile은 FROM 표준베이스 + 의존성 + 소스만
+  python_web: "gg-python-web:3.12"   # Track A·B·S
+  node_web: "gg-node-web:20"         # Track N
+  build_only: "gg-node:20"           # React 정적 빌드(이관 서빙 금지)

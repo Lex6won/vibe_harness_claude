@@ -1,0 +1,50 @@
+# 배포 컨텍스트 — 행정망/외부망 × 공무원/시민 (최상위 분기)
+# 존 결정자: "시민이 접근하나?" (관리 주체가 아님)
+# 전 에이전트 공용 기계규칙. intake-router가 첫 질문으로 판정.
+
+determinant: "시민이 접근하나?"  # 관리는 공무원이어도 대민이면 외부망
+
+zones:
+  internal:                     # 행정망 내부
+    audience: [직원만, 타기관공무원]   # ①②
+    external_outbound: none
+    llm_api: "직접 불가 → 망연계 프록시 / DMZ 중계 / 내부 sLLM"
+    cdn: "전부 self-host(템플릿 내장)"
+    external_api: "불가 → 망연계 / 데이터 사전반입"
+    packages: "오프라인 미러(pip/npm/RPM)"
+    gvskb_intel: "offline 번들 (GVSKB_MODE=offline)"
+    auth: "Keycloak(OIDC) / GPKI 연계 (직접 구현 금지)"
+    server_db_location: 행정망내부
+    gate: 표준_내부심사
+    allowed_tracks: [local-automation, streamlit-internal, fastapi-web, react-fastapi, node-api]
+    gvskb_profile: internal-db-query
+    note: "타기관 공무원 접근은 망연계 이슈 — 1차 단순처리, hybrid 제외"
+
+  external:                     # 외부망 / DMZ (대민)
+    audience: [시민]                  # ③ (직원 관리 포함 가능)
+    external_outbound: "통제된 허용"
+    llm_api: "승인 경로 가능 (호출률·비용 방어 필수)"
+    cdn: "self-host 권장"
+    external_api: 조건부
+    packages: "오프라인 미러(동일)"
+    gvskb_intel: "온라인 갱신 가능"
+    auth: "시민=시민인증(간편·본인확인)·익명 / 관리자(공무원)=ID·PW, 외부망 서버에서 관리"
+    server_db_location: 외부망            # 서비스·관리·DB 전부 외부망
+    gate: "DAST·WAF 필수, 건별 위원회 승인"
+    allowed_tracks: [fastapi-web, react-fastapi, node-api]   # Track S 금지
+    forbidden_tracks: [streamlit-internal]                   # 대민 불가
+    gvskb_profile: web-civil-service      # 챗봇이면 civil-complaint-chatbot
+    data_source: "자체 외부 DB. 내부자료 참조 시에만 단방향 사전반입(직결 금지) — 별도 케이스"
+
+safety_rules:
+  - id: no-auto-citizen
+    rule: "대민(external) 자동분류 금지. 애매하면 internal로 두되, 시민 배포는 반드시 사람(위원회) 승인."
+  - id: intent-matches-code
+    rule: "설계 답변과 코드 현실 강제 일치. internal이면 external_surface·GOV-INTERNAL-NET-001이 외부통신 코드 차단."
+
+profile_map:      # gvskb scan_path(profile=) 하이픈명
+  internal_default: internal-db-query
+  internal_web: web-civil-service
+  citizen_web: web-civil-service
+  citizen_chatbot: civil-complaint-chatbot
+  public_strict: public-default-strict

@@ -1,0 +1,79 @@
+# 패키지 카탈로그 — 승인·차단 통합 (넓은 승인, 강한 차단)
+# solution-architect가 참조, 메인 루프가 구현 시 준수. 밖의 패키지는 대체안 먼저 → 예외신청.
+# ※ 이 목록은 시드(초안). 운영단이 미러 기준으로 확정·소유하는 "미러의 씨앗".
+
+policy: 넓은 승인, 강한 차단
+version: seed-0.1
+
+approved:
+  python:      # core: 자유 사용
+    - fastapi
+    - uvicorn
+    - pydantic
+    - jinja2
+    - python-multipart
+    - sqlalchemy
+    - psycopg
+    - alembic
+    - authlib
+    - PyJWT
+    - argon2-cffi
+    - cryptography
+    - streamlit
+    - pandas
+    - openpyxl
+    - matplotlib
+    - plotly
+  npm_frontend:
+    - react
+    - react-dom
+    - vite
+    - typescript
+    - react-router-dom
+    - lucide-react
+    - recharts
+    - zod
+    - '@tanstack/react-query'
+  npm_backend:
+    - express
+    - express-rate-limit
+    - helmet
+    - pg
+    - zod
+    - openid-client
+    - jose
+    - pino
+
+restricted:          # 사용 가능하되 조건/주의 (외부통신 등)
+    - requests
+    - httpx
+    - beautifulsoup4
+    - axios
+
+denied:              # 강차단 — 승인 대체안 먼저 제시, 불가 시 예외신청
+  packages:
+    - supabase-js
+    - firebase
+    - puppeteer
+    - playwright
+    - execjs
+  patterns:          # 코드/설정 패턴 차단
+    - "cdn.jsdelivr.net"
+    - "unpkg.com"
+    - "eval("
+    - "new Function("
+    - "postinstall"
+    - "하드코딩 api key"
+
+강차단_기준:
+    - Critical CVE
+    - 타이포스쿼트
+    - 외부 BaaS 직접 의존
+    - CDN 운영 의존
+    - postinstall 필수 실행
+    - 임의 코드 실행
+    - 금지 라이선스
+    - 유지보수 중단
+    - 비밀정보 외부 전송
+
+unknown_처리: "즉시 차단이 아니라 승인 대체안 먼저 제시 → 불가 시 05_예외신청서. 게이트에서 gvskb scan_dependencies가 락파일 트리 실제 검증."

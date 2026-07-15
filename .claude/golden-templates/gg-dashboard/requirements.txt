@@ -1,0 +1,6 @@
+# package-catalog.yaml(python) 안에서만. 고정.
+streamlit==1.39.*
+pandas==2.*
+plotly==5.*
+sqlalchemy==2.*
+psycopg[binary]==3.*

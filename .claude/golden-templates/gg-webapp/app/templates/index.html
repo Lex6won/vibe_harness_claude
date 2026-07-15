@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_name }}</title>
+  <!-- 정적자산 self-host만. 외부 CDN 링크 금지(레일). -->
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; }
+    .badge { font-size: 12px; background: #eef; color: #336; padding: 2px 8px; border-radius: 10px; }
+    form { display: flex; gap: 8px; margin: 16px 0; } input, button { padding: 8px 10px; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <h1>{{ app_name }} <span class="badge">내부 시제품(L1)</span></h1>
+  {# Jinja2 자동 이스케이프로 XSS 예방 — |safe 남용 금지 #}
+  <form method="post" action="items">
+    <input name="title" placeholder="제목" required maxlength="200">
+    <button type="submit">등록</button>
+  </form>
+  <ul>{% for it in items %}<li>{{ it.title }}</li>{% endfor %}</ul>
+  <p><a href="health">/health</a></p>
+</body>
+</html>
