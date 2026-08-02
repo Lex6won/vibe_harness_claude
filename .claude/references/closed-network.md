@@ -10,8 +10,8 @@
 | 아이콘·CSS 프레임워크 | self-host |
 | 지도 API / 외부 Open API | 내부 GIS 연계 / 데이터 사전반입 / DMZ 경유 |
 | 이메일·SMS | 내부 알림 수단 연계 |
-| 외부 BaaS (Supabase·Firebase) | DB→PostgreSQL, Auth→Keycloak 치환, 호출부 api 계층 분리 |
-| 패키지 설치(pypi/npm) | 오프라인 미러(pip/npm/RPM) |
+| 외부 BaaS (Supabase·Firebase) | DB→org-environment.yaml 승인 DBMS, Auth→org-environment.yaml auth_provider(기본 Keycloak) 치환, 호출부 api 계층 분리 |
+| 패키지 설치(pypi/npm) | org-environment.yaml network_zones.internal.package_mirror (기본 오프라인 미러 pip/npm/RPM) |
 | gvskb 위협 인텔 | offline 번들(`gvskb intel-bundle import`, `GVSKB_MODE=offline`) |
 
 ## 코드-현실 강제 일치

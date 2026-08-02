@@ -4,7 +4,7 @@
 아래 4종은 **핵심 2종의 레일을 상속해 파생**한다(같은 레일을 반드시 유지). solution-architect가 Track을 정하면 메인 루프가 이 가이드대로 확장한다.
 
 ## 공통 레일 (모든 변형 필수)
-런타임 고정 · `/health` · 보안헤더 · 비밀값 `.env`만 · 파라미터 바인딩(SQLi 예방) · 외부 CDN/외부통신 금지(행정망) · 승인 패키지(package-catalog)만 · 인증 위임(Keycloak/OIDC) · 내부 Harbor 베이스+HEALTHCHECK · 프로젝트 CLAUDE.md.
+런타임 고정(org-environment.yaml) · `/health` · 보안헤더 · 비밀값 `.env`만 · 파라미터 바인딩(SQLi 예방) · 외부 CDN/외부통신 금지(행정망) · 승인 패키지(org-packages.yaml)만, **새 패키지는 `gvskb_gate.py`(pip)/`gvskb_gate.js`(npm) 경유 설치** · 인증 위임(org-environment.yaml auth_provider, 기본 Keycloak/OIDC) · 기관 내부 레지스트리 베이스(org-environment.yaml container.base_images)+HEALTHCHECK · 프로젝트 CLAUDE.md.
 
 ## gg-upload (Track A · 파일 업로드)
 - 베이스: `gg-webapp` 상속.
@@ -16,12 +16,12 @@
 - **외부 LLM 없는 로컬 텍스트 검색만.** LLM 승격 시: 행정망은 망연계/내부 sLLM만, 프롬프트 인젝션 방어(시스템/사용자 입력 신뢰경계 분리), 출처 표시, 입력 개인정보 마스킹, 대화 미저장.
 
 ## gg-spa (Track B · React 정적 SPA)
-- 프런트: React(Vite)+TS 정적 빌드(내부 `gg-node:20` 빌드), 호스트 nginx가 `/apps/<project>/` 서빙(보안헤더는 nginx).
+- 프런트: React(Vite)+TS 정적 빌드(org-environment.yaml container.base_images.build_only 빌드), 호스트 nginx가 `/apps/<project>/` 서빙(보안헤더는 nginx).
 - 백엔드: `gg-webapp`(FastAPI) API.
 - 레일: **데이터 호출은 `src/lib/api.js` 한 곳으로만**(컴포넌트 직접 fetch·외부 BaaS 금지) · base_path는 vite base(VITE_BASE) 주입 · `npm ci --ignore-scripts`+lockfile.
 
 ## gg-node-api (Track N · Express)
-- 베이스: 내부 `gg-node-web:20`.
+- 베이스: org-environment.yaml container.base_images.node_web.
 - 레일: helmet(보안헤더) · express-rate-limit(호출률) · pg 파라미터 바인딩($1) · zod 입력검증 · pino 로그 · 인증은 openid-client/jose(Keycloak) · `npm ci --ignore-scripts`+lockfile.
 - 사용자가 정당 사유(기존 TS 재사용) 언급 시만 선택.
 

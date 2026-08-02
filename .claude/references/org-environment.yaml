@@ -1,0 +1,146 @@
+# ============================================================
+# 기관 환경설정 (Institution Environment Config)
+# 다른 시군/기관에서 이 하네스를 쓰려면 이 파일 하나만 교체하면 된다.
+# 짝꿍 파일: org-packages.yaml (승인·차단 패키지·플러그인)
+# 이 파일을 읽는 곳: solution-architect·security-reviewer·deploy-packager,
+#   골든 템플릿의 {ORG_BASE_IMAGE_*} 플레이스홀더, deploy-context.yaml·
+#   closed-network.md·exception-policy.md의 존/인증/승인주체 규칙.
+# 정책의 "논리"(존 분기, Track 규칙, 데이터 등급 등)는 각 references/*.yaml에
+# 그대로 두고, "기관마다 달라지는 값"만 이 파일에 모은다.
+# ============================================================
+
+org:
+  name: "경기도"                 # 기관명 — 산출물 문서·manifest 표기용
+  code: "gg"                    # 소문자 영문 코드(베이스이미지·스킬 접두사에 쓰이는 값)
+  harness_version: "gg-vibecode 0.1"
+
+# 존(zone) 가용성 — 기관에 대민(외부망/DMZ) 서비스가 아예 없으면 false로.
+# false면 deploy-context.yaml의 external 분기를 비활성화하고 전부 internal로 판정한다.
+network_zones:
+  has_external_zone: true
+
+  internal:
+    label: "행정망"
+    audience: [직원만, 타기관공무원]
+    external_outbound: none
+    auth_provider: "Keycloak(OIDC) / GPKI 연계"
+    registry: "내부 Harbor"
+    package_mirror: "오프라인 미러(pip/npm/RPM)"
+
+  external:
+    label: "외부망/DMZ"
+    audience: [시민]
+    external_outbound: "통제된 허용"
+    auth_provider: "시민인증(간편·본인확인)·익명 + 관리자(공무원) ID/PW"
+    registry: "내부 Harbor"
+    package_mirror: "오프라인 미러(동일)"
+
+# 개발서버·운영서버 — 언어 버전·DBMS 제한. 기관마다 다를 수 있는 부분.
+#
+# 언어 "추천"은 하지 않는다(원칙): Track이 이미 언어를 고정 배정하고
+# (approved-tracks.yaml: Track A/S=Python, Track B 프론트/Track N=Node),
+# 배포도 컨테이너 기반(base_images)이라 호스트 OS·서버스펙이 언어 선택에
+# 관여하지 않는다. 서버사양·OS 기반으로 AI가 언어를 추천하게 하면
+# Track 규칙과 별개의 판단 기준이 생겨 approved-tracks.yaml과 충돌할 수 있다.
+# 대신 아래 languages는 "이 기관이 승인한 언어가 무엇인지"만 선언하고,
+# solution-architect는 요청 기능이 이 목록 밖의 언어/런타임을 요구하면
+# approved-tracks.yaml의 "가까운 승인 Track + 선회" 규칙으로 반려한다.
+runtime:
+  languages:
+    approved:
+      - name: python
+        용도: "Track A(FastAPI)·Track S(Streamlit) 백엔드·자동화 스크립트"
+      - name: node
+        용도: "Track B(React 정적빌드)·Track N(Express) 백엔드"
+    denied: []   # 예: java, php, ruby, .net 등. 요청 시 approved-tracks.yaml denied 선회 규칙 적용
+  dev:
+    python: "3.12"     # 상위 버전 문법 금지
+    node: "20"
+  prod:
+    python: "3.12"     # 운영서버가 개발서버와 다른 고정 버전이면 여기만 수정
+    node: "20"
+  dbms:
+    approved: [postgresql]
+    postgresql_version: "16"
+    approved_extensions: [pgcrypto, pg_trgm, uuid-ossp, pgvector]
+    denied: [mysql, mariadb, mongodb, oracle, mssql]   # 기관 표준 DBMS 정책에 맞춰 조정
+
+container:
+  cpu_default: 1
+  memory_gb_default: 2         # 초과 필요 시 예외 신청
+  storage: "컨테이너 무상태 → 파일은 지정 볼륨만"
+  base_images:                 # 골든 템플릿 Dockerfile의 {ORG_BASE_IMAGE_*} 플레이스홀더 치환값
+    python_web: "gg-python-web:3.12"   # Track A·B·S
+    node_web: "gg-node-web:20"         # Track N
+    build_only: "gg-node:20"           # React 정적 빌드(이관 서빙 금지)
+  routing:
+    base_path_pattern: "/apps/<project>/"
+    port_range: "10001-10999"
+    health_path: "/health"
+  logging: "표준출력만 (journald 수집) — 파일 로그 금지"
+  secrets: "환경변수 주입 (podman secret 등) — 코드·저장소 포함 금지"
+
+# 인프라 명세 — 배포신청서(04_배포신청서.md)·운영팀 인수 근거용 "선언" 데이터.
+# Track·언어 자동 선택에는 관여하지 않는다(위 runtime.languages 설명 참고).
+# 값이 비어 있어도 하네스는 그대로 동작한다 — 채워두면 배포신청서 자동 작성이 더 정확해진다.
+infra:
+  os: "미기재 — 실제 배포 서버 OS로 교체(예: Rocky Linux 9, Ubuntu 22.04 LTS)"
+  web_server: nginx
+  installed_middleware: [nginx, postgresql, keycloak, harbor]   # 기관 서버에 실제 설치된 것으로 교체
+  server_spec:
+    dev:
+      cpu: "미기재"
+      memory_gb: "미기재"
+      disk_gb: "미기재"
+    prod:
+      cpu: "미기재"
+      memory_gb: "미기재"
+      disk_gb: "미기재"
+
+# 예외·승인 절차의 실제 승인 주체 명칭 — 기관 조직구조에 맞게 교체.
+# exception-policy.md 표의 "승인 주체" 열이 이 값을 따른다.
+approval_authority:
+  new_package: "운영단 보안 담당"
+  external_api: "팀단"
+  personal_data: "개인정보보호 부서"
+  citizen_deploy: "팀단 건별 의결"
+  gvskb_rule_exception: "운영단 보안 담당"
+
+# 패키지 설치 집행(enforcement) — .claude/enforcement/gvskb_gate.py(+.js)가 읽는 값.
+# gvskb·gg-trusted-registry는 "판정"만 내리고, 그 판정으로 실제 pip/npm install을
+# 막거나 통과시키는 것은 이 하네스(gvskb_gate)뿐이다(하네스_집행계약.md §1).
+enforcement:
+  # MONITOR: 기록만 하고 항상 통과 / WARN: 경고 후 통과(실무 기본값 권장) /
+  # ENFORCE: 절대차단 세트 + 위험 판정을 실제로 막음.
+  # 시작값은 MONITOR — 기관 레지스트리 데이터가 충분히 쌓이기 전에 ENFORCE로
+  # 시작하면 대부분 unknown이라 개발이 통째로 막힌다(레지스트리팀 협의요청 §11).
+  mode: MONITOR
+  # MONITOR→WARN→ENFORCE 승격 검토 기준(집계 후 수동 판단, 자동 전환 아님).
+  # 결정 근거: 레지스트리팀 회신(21번 §6) — 분모는 전이 의존성을 뺀 "직접 의존성"만
+  # 쓴다(전이 의존성까지 넣으면 비율이 우리 커버리지가 아니라 생태계 크기를 반영하게
+  # 됨). 비율 하나만으로는 프로젝트가 커져 분모가 늘 때 실제로 좋아졌는데도 비율이
+  # 안 내려가는 구간이 생기므로, 비율+등록건수 두 지표를 **모두** 만족해야 전환한다.
+  escalation_guideline:
+    denominator: "직접 의존성만(전이 의존성 제외)"
+    enforce_when:
+      direct_dependency_unknown_ratio_pct_at_most: 10
+      registered_packages_at_least: 200
+      condition: AND   # 둘 다 충족해야 함. 하나만 봐도 되는 게 아니다.
+  # 실행환경 등급(E0~E2)은 개발자가 고르지 않는다 — gvskb_gate가 컨텍스트로 자동
+  # 결정한다(개인PC 세션=E1 기본, CI/빌드 파이프라인 감지=E2). 상향은 자유,
+  # 하향은 GVSKB_GATE_ENV_GRADE 명시적 override로만 가능(레지스트리팀 협의요청 §5-2).
+  env_grade_auto: true
+  # 차단 우회(예외) — 사전 승인된 코드만 허용. 자유문장 사유 금지(집계 불가·개인정보
+  # 유입 위험). 절대차단 4종(malicious/registry_rejected/not_found/in_kev)과 카탈로그
+  # denied/pending_review는 이 코드로도 우회 불가 — 후자는 05_예외신청서 정식 절차만.
+  # 기관마다 코드 목록을 교체할 수 있으나, 코드 추가 시에도 "자유문장 아님" 원칙은 유지할 것.
+  exception_codes:
+    SECURITY_PATCH_URGENT: "보안 패치를 긴급 적용해야 하는 경우(쿨다운 대기 우회 등)"
+    VENDOR_CONFIRMED_FALSE_POSITIVE: "패키지 공식 채널·벤더가 오탐임을 확인한 경우"
+    TEAM_LEAD_APPROVED_TEMP: "팀장(또는 상응 직책) 승인을 받은 임시 예외 — 재검증 필요"
+
+# 이 파일만으로는 완전히 이식되지 않는 부분(별도 작업 필요) — 이식 시 체크리스트로 사용
+known_limitations:
+  - "골든 템플릿 폴더명(gg-webapp 등)과 스킬명(gg-vibecode)은 org.code와 별개로 하드코딩되어 있다. 완전한 브랜드 교체는 별도 리네이밍 작업이 필요하다(README 이관 가이드 참고)."
+  - "base_images 값은 실제로 해당 기관 레지스트리(Harbor 등)에 동일 태그 이미지가 존재해야 동작한다. 없으면 먼저 이미지를 빌드·등록해야 한다."
+  - "infra 블록은 '미기재' 기본값으로 시작한다. 이식 시 실제 OS·설치 미들웨어·서버스펙으로 채워야 04_배포신청서가 정확해진다(채우지 않아도 하네스 동작 자체는 지장 없음)."

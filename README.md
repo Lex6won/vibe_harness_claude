@@ -150,7 +150,7 @@ risk_flags: [file_upload, possible_personal_data]
 ```text
 템플릿: golden-templates/gg-dashboard   # solution-architect가 결정
 네트워크: admin-network / 외부통신: 없음 / CDN: 사용 안 함
-패키지: package-catalog 승인 목록 / 검증: quick (게이트)
+패키지: org-packages.yaml 승인 목록(gvskb_gate 경유 설치) / 검증: quick (게이트)
 ```
 
 ## 결과 예시
@@ -254,11 +254,44 @@ _workspace/
 
 ## Package Policy
 
-"넓은 승인, 강한 차단." 승인·차단을 `references/package-catalog.yaml` 한 파일에서 관리합니다.
+"넓은 승인, 강한 차단." 승인·차단을 `references/org-packages.yaml` 한 파일에서 관리합니다.
 
 - 미승인 패키지는 즉시 차단이 아니라 승인 대체안 먼저 제시 → 불가 시 예외신청.
 - 강차단: Critical CVE·타이포스쿼트·외부 BaaS 직접 의존·CDN 운영 의존·postinstall 실행·임의 코드 실행.
 - 게이트에서 gvskb `scan_dependencies`가 락파일 트리를 실제 검증합니다.
+
+## 다른 시군/기관으로 이식하기
+
+이 하네스는 "경기도"에 고정된 게 아니라, **기관마다 달라지는 값을 2개 파일에 모아두고** 그 파일만
+바꾸면 되도록 설계되어 있습니다. 나머지 레퍼런스 파일(`deploy-context.yaml`, `approved-tracks.yaml`,
+`data-traffic-light.yaml`, `maturity-model.md`, `closed-network.md`, `exception-policy.md`)은
+"판정 로직"만 담고 있어 대부분의 기관에서 그대로 재사용할 수 있습니다.
+
+### 1. `references/org-environment.yaml` — 개발/운영 환경
+
+- 존(zone) 가용성: 대민(외부망/DMZ) 서비스가 없는 기관이면 `network_zones.has_external_zone: false`
+- 개발서버·운영서버 언어 버전: `runtime.dev` / `runtime.prod` (Python·Node 등)
+- 허용 DBMS·버전·확장: `runtime.dbms`
+- 컨테이너 쿼터·베이스 이미지·레지스트리·포트대역·base_path: `container`
+- 인증 제공자(Keycloak 등), 레지스트리, 패키지 미러: `network_zones.internal` / `.external`
+- 예외신청 승인 주체 명칭(조직 구조가 다르면 여기만 수정): `approval_authority`
+
+### 2. `references/org-packages.yaml` — 승인/차단 패키지·플러그인
+
+- `approved` / `restricted` / `denied` 목록을 기관 오프라인 미러(pip/npm/RPM) 기준으로 교체
+- `강차단_기준`, `unknown_처리` 같은 판정 규칙은 정책 로직이라 보통 그대로 재사용 가능
+
+### 3. 골든 템플릿 Dockerfile의 플레이스홀더 치환
+
+`golden-templates/*/Dockerfile`의 `FROM {ORG_BASE_IMAGE_PYTHON_WEB}` 같은 플레이스홀더는
+main 루프가 구현 단계에서 `org-environment.yaml`의 `container.base_images` 값으로 치환합니다.
+새 기관의 레지스트리에 해당 태그 이미지가 실제로 존재해야 동작합니다.
+
+### 알려진 제약 (2개 파일 교체만으로는 안 끝나는 부분)
+
+- 골든 템플릿 폴더명(`gg-webapp` 등)과 스킬명(`gg-vibecode`)은 여전히 "gg-" 접두사가 하드코딩되어
+  있습니다. 기능상 동작에는 지장이 없지만, 완전한 브랜드 교체를 원하면 별도 리네이밍이 필요합니다.
+- `.mcp.json`의 `GVSKB_MODE`(offline/online)는 기관 망 환경에 맞춰 직접 설정해야 합니다.
 
 ## Validation
 

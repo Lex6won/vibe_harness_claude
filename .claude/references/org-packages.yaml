@@ -1,0 +1,147 @@
+# 기관 패키지 카탈로그 (Institution Package Catalog) — 승인·차단 통합
+# 다른 시군/기관에서 이 하네스를 쓸 때 org-environment.yaml과 함께 교체하는 두 번째 파일.
+# 여기 목록은 기관 오프라인 미러(pip/npm/RPM)에 실제로 존재하는 패키지 기준으로 채운다.
+# 강차단_기준·unknown_처리 같은 판정 규칙(정책 로직)은 기관이 달라도 보통 그대로 재사용한다.
+# solution-architect가 참조, 메인 루프가 구현 시 준수. 밖의 패키지는 대체안 먼저 → 예외신청.
+# ※ 이 목록은 시드(초안). 운영단이 미러 기준으로 확정·소유하는 "미러의 씨앗".
+#
+# 이 파일과 gvskb 검증의 관계 (중요, 혼동 주의 — 하네스_집행계약.md §6 기준):
+# - 이 파일은 gg-trusted-registry(기관 신뢰 레지스트리)와 **별개의, 하네스 로컬** 카탈로그다.
+#   gg-trusted-registry는 gvskb가 내부적으로 조회하고(GVSKB_REGISTRY_URL), 그 결과가
+#   gvskb 판정(verdict)에 이미 반영되어 나온다 — 하네스가 레지스트리에 직접 묻지 않는다.
+# - 새 패키지를 설치할 때는 `.claude/enforcement/gvskb_gate.py install`(pip) 또는
+#   `.claude/enforcement/gvskb_gate.js install`(npm)을 거친다. 이 게이트가 ①이 파일의
+#   denied/pending_review → ②gvskb 절대차단(악성·기관차단·미존재·KEV) → ③이 파일의
+#   approved → ④gvskb registry_approved/checked_clean → ⑤나머지는 모드(MONITOR/WARN/
+#   ENFORCE)표 순으로 판정한다. 차단 두 개(①②)를 항상 허용(③④)보다 먼저 본다.
+# - 즉 "approved 목록에 있다" ≠ "안전 확정"이다 — 게이트가 매번 gvskb를 실제로 부르고,
+#   gvskb가 그 순간 새 CVE·악성 등재를 발견하면 그때 경고·차단될 수 있다.
+# - 자동화(이 파일 자체의 항목 갱신 파이프라인)는 파일 하단 `automation` 참고.
+#
+# gg-trusted-registry가 이 파일을 초기 데이터로 반영할 때(레지스트리팀 회신 26번 §3):
+# - `approved.*`는 **버전이 없다** — "이 이름을 써도 된다"는 범위 선언이지 "이 버전이
+#   안전하다"는 판정이 아니다. 레지스트리의 APPROVED(=검증된 특정 버전)로 그대로 승격
+#   시키면 안 된다(등록 안 된 신규 취약 버전까지 통과됨). 실제 APPROVED는 gvskb가 실제
+#   버전을 조회해 checked_clean으로 확인할 때마다 레지스트리가 자연스럽게 채운다 —
+#   카탈로그는 그 범위를 정할 뿐 승인의 원천이 아니다(하네스팀 결정, §3-4 대안 채택).
+# - `denied.packages`는 이름 단위 전 버전 차단으로 그대로 REJECTED 반영해도 된다
+#   (보수적 방향이라 안전, §6-0 불변식과 일치).
+# - `denied.patterns`는 패키지가 아니라 코드/설정 패턴이라 레지스트리 범위 밖이다.
+
+policy: 넓은 승인, 강한 차단
+version: seed-0.1
+
+approved:
+  python:      # core: 자유 사용
+    - fastapi
+    - uvicorn
+    - pydantic
+    - jinja2
+    - python-multipart
+    - sqlalchemy
+    - psycopg
+    - alembic
+    - authlib
+    - PyJWT
+    - argon2-cffi
+    - cryptography
+    - streamlit
+    - pandas
+    - openpyxl
+    - matplotlib
+    - plotly
+  npm_frontend:
+    - react
+    - react-dom
+    - vite
+    - typescript
+    - react-router-dom
+    - lucide-react
+    - recharts
+    - zod
+    - '@tanstack/react-query'
+  npm_backend:
+    - express
+    - express-rate-limit
+    - helmet
+    - pg
+    - zod
+    - openid-client
+    - jose
+    - pino
+
+restricted:          # 사용 가능하되 조건/주의 — 전부 외부 HTTP 호출용 라이브러리다.
+    # "조건"은 설치 시점에 gvskb_gate가 강제할 수 있는 플래그(--ignore-scripts류)가
+    # 아니라, 실제 호출 대상이 승인된 곳인지 코드 리뷰가 필요하다는 뜻이다. 이미
+    # deploy-context.yaml(행정망 외부통신 금지)·closed-network.md가 정책을 갖고 있고,
+    # scan_code/scan_path의 external_surface·GOV-INTERNAL-NET-001 룰이 실제 코드에서
+    # 외부 호출을 탐지해 게이트에서 걸린다 — 레지스트리 conditions 필드로 옮길 대상이
+    # 아니다(레지스트리팀 회신 26번 §3-5 질문에 대한 답).
+    - requests
+    - httpx
+    - beautifulsoup4
+    - axios
+
+denied:              # 강차단 — 승인 대체안 먼저 제시, 불가 시 예외신청
+  packages:
+    - supabase-js
+    - firebase
+    - puppeteer
+    - playwright
+    - execjs
+  pending_review:    # 운영단이 검토 중인 것(수동 등재 — 아래 automation 참고, 자동 파이프라인은 없음).
+                      # 승인 아님 — denied.packages와 동일하게 취급한다. 담당자 확정 후 approved 또는
+                      # denied.packages로 옮기고 여기서 제거한다. 항목 예시(플랫폼이 채움):
+                      # - {name: some-pkg, ecosystem: npm, verdict: review_required, checked_at: "2026-08-01", reason: "vulnerability_count>0"}
+    []
+  patterns:          # 코드/설정 패턴 차단
+    - "cdn.jsdelivr.net"
+    - "unpkg.com"
+    - "eval("
+    - "new Function("
+    - "postinstall"
+    - "하드코딩 api key"
+
+강차단_기준:
+    - Critical CVE
+    - 타이포스쿼트
+    - 외부 BaaS 직접 의존
+    - CDN 운영 의존
+    - postinstall 필수 실행
+    - 임의 코드 실행
+    - 금지 라이선스
+    - 유지보수 중단
+    - 비밀정보 외부 전송
+
+unknown_처리: "즉시 차단이 아니라 승인 대체안 먼저 제시 → 불가 시 05_예외신청서. 게이트에서 gvskb scan_dependencies가 락파일 트리 실제 검증."
+
+# ============================================================
+# 자동화 연동 — 이 파일(하네스 로컬 카탈로그)의 실제 집행 방식
+# owner는 여전히 운영단 보안 담당(사람)이다. gg-trusted-registry는 이 파일과
+# 별개 시스템이고 gvskb가 내부에서 조회한다 — "외부 플랫폼이 이 YAML을 대신
+# 써준다"는 이전 설계는 실제 구현(하네스_집행계약.md)과 맞지 않아 폐기했다.
+# ============================================================
+automation:
+  executor: ".claude/enforcement/gvskb_gate.py(+.js) — 이 파일을 실제로 읽고 집행하는 코드"
+  owner: "운영단 보안 담당 — approved/denied/pending_review 항목은 사람이 등재·이동한다"
+  gvskb_covers:      # gvskb check_package/scan_dependencies가 실제로 검사하는 축(엔진 최신화 완료분)
+    - "OSV.dev 알려진 취약점(CVE) + 심각도(max_cve)"
+    - "OSV 악성 패키지 advisory + CISA KEV 실공격 대조(in_kev)"
+    - "공식 저장소 실재 여부(exists) — 미존재는 verdict=not_found로 절대차단"
+    - "쿨다운(cooldown) — 버전 발행 후 경과일, E0~E2 등급별 기준일"
+    - "라이선스(license_verdict) — VCPS 허용목록(MIT/Apache-2.0/BSD/ISC/MPL-2.0/PSF-2.0) 대조"
+    - "설치 스크립트 존재 여부(install_scripts) — 있으면 note로 경고"
+    - "npm deprecated 표시"
+    - "타이포스쿼트 편집거리 휴리스틱(단독 차단 근거 아님, 검토 신호일 뿐)"
+    - "기관 레지스트리(gg-trusted-registry) 조회 결과 — GVSKB_REGISTRY_URL 설정 시 verdict에 자동 반영"
+  gvskb_does_not_cover:   # 강차단_기준 중 gvskb가 아직 검사하지 않는 축 — 이 파일의 denied.patterns·사람 검토로 보완
+    - "외부 BaaS 직접 의존 · CDN 운영 의존 · postinstall '실행'(존재 여부는 install_scripts로 보되, 실제 스크립트 내용 분석은 없음)"
+    - "임의 코드 실행(eval 등) — 코드 자체는 scan_code/scan_path(별도 도구)가 담당, 패키지 검사 범위 밖"
+  verdict_to_gate_action:  # gvskb_gate.py가 실제로 적용하는 매핑(요약 — 코드가 유일한 출처)
+    "malicious / registry_rejected / not_found / in_kev=true": "모드 무관 항상 차단"
+    "vulnerable(max_cve HIGH·CRITICAL)": "MONITOR=경고 · WARN=차단 · ENFORCE=차단"
+    "cooldown_hold": "MONITOR=통과(기록) · WARN=경고 · ENFORCE=차단"
+    "unknown / error": "MONITOR=통과(기록) · WARN=경고 · ENFORCE=차단"
+    "checked_clean / registry_approved(checked=true)": "항상 통과"
+  precondition: "행정망 기본값 GVSKB_MODE=offline에서는 `gvskb update-intel` 로컬 인텔 캐시가 최신이어야 checked_clean이 나온다. 캐시가 없거나 오래되면 verdict가 unknown/checked_stale로 내려가 ENFORCE 모드에서 차단될 수 있다 — 캐시 갱신 주기를 모니터링할 것."
+  mode_config: "org-environment.yaml의 enforcement.mode(MONITOR/WARN/ENFORCE 기본값)와 GVSKB_GATE_MODE 환경변수로 조정한다."

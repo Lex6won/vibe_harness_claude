@@ -1,6 +1,7 @@
 # gg-dashboard — 프로젝트 레일 (Track S)
 
-- 런타임 Python 3.12 / PostgreSQL 16 고정. 승인 패키지만.
+- 런타임(org-environment.yaml 기준) 고정. 승인 패키지(org-packages.yaml)만.
+- 새 패키지 설치는 `pip install` 대신 `.claude/enforcement/gvskb_gate.py install <이름>` 사용.
 - **내부 한정.** 시민 접근이면 Track S 금지 → gg-webapp/gg-spa 재설계 요청.
 - 접근제어·보안헤더는 nginx 앞단(`nginx.conf`), Keycloak. Streamlit에 인증 직접 구현 금지.
 - 비밀값 `.env`만. DB는 파라미터 바인딩. 개인정보 평문·실데이터 금지(더미).

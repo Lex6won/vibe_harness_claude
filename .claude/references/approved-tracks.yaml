@@ -33,11 +33,13 @@ denied:                 # 미승인 → 가까운 승인 Track + 선회 방법 �
   - stack: [Spring Boot, Django, Flask]
     선회: "Flask→FastAPI 선회 안내"
   - stack: [supabase-js 직접, firebase]
-    선회: "DB→PostgreSQL, Auth→Keycloak 치환, 데이터 호출은 api 계층 분리"
+    선회: "DB→PostgreSQL, Auth→org-environment.yaml의 auth_provider로 치환, 데이터 호출은 api 계층 분리"
   - stack: PHP
     선회: 표준 외
+  - stack: "org-environment.yaml runtime.languages.approved 밖의 언어/런타임"
+    선회: "요청 기능이 요구하는 언어가 기관 승인 언어 목록 밖이면, 가장 가까운 승인 언어(Python/Node)로 구현 가능한지 먼저 검토 → 정말 불가하면 예외신청(exception-policy.md)"
 
-runtime_fixed:          # runtime-env.yaml과 일치
-  python: "3.12"
-  node: "20"
-  postgresql: "16"
+# 런타임 버전(Python/Node/PostgreSQL)은 이 파일에 중복 기재하지 않는다.
+# 유일한 출처는 org-environment.yaml의 runtime 블록.
+# 언어 자체의 승인 여부는 서버사양·OS로 추천하지 않고 org-environment.yaml
+# runtime.languages.approved 선언값만 따른다(근거는 org-environment.yaml 주석 참고).

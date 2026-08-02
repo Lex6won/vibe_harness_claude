@@ -1,5 +1,6 @@
-# 표준 베이스만 (내부 Harbor). 공개 베이스 금지.
-FROM gg-python-web:3.12
+# 표준 베이스만 (기관 내부 레지스트리). 공개 베이스 금지.
+# 구현 시 아래 플레이스홀더를 org-environment.yaml container.base_images.python_web 값으로 치환한다.
+FROM {ORG_BASE_IMAGE_PYTHON_WEB}
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

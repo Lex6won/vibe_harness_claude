@@ -1,6 +1,8 @@
 # gg-webapp — 프로젝트 레일 (Track A)
 
-- 런타임 Python 3.12 / PostgreSQL 16 고정. 승인 패키지(package-catalog)만.
+- 런타임(org-environment.yaml 기준) 고정. 승인 패키지(org-packages.yaml)만.
+- 새 패키지 설치는 `pip install` 대신 `python ../../enforcement/gvskb_gate.py install <이름>` 사용
+  (경로는 프로젝트 위치에 맞게 조정 — `.claude/enforcement/gvskb_gate.py`).
 - 비밀값 `.env`/환경변수만, 리터럴 금지. `.env.example`만 커밋.
 - DB는 SQLAlchemy 파라미터 바인딩만. 문자열 조립 쿼리·`os.system` 금지.
 - 개인정보 평문 저장 금지, 더미 데이터. XSS: 템플릿 이스케이프 유지, `debug=True` 금지.

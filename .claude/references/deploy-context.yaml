@@ -1,34 +1,38 @@
 # 배포 컨텍스트 — 행정망/외부망 × 공무원/시민 (최상위 분기)
 # 존 결정자: "시민이 접근하나?" (관리 주체가 아님)
 # 전 에이전트 공용 기계규칙. intake-router가 첫 질문으로 판정.
+# 이 파일은 분기 "로직"(존을 어떻게 정하고 각 존에서 뭘 허용·금지하는지)만 다룬다.
+# auth_provider·registry·package_mirror 등 기관마다 달라지는 구체값은 org-environment.yaml이 유일한 출처다.
+# org-environment.yaml의 network_zones.has_external_zone=false인 기관은 external 존 자체가 없다 —
+# 그런 기관에서는 대민 배포를 제안하지 않고 항상 internal로 판정한다.
 
 determinant: "시민이 접근하나?"  # 관리는 공무원이어도 대민이면 외부망
 
 zones:
-  internal:                     # 행정망 내부
+  internal:                     # 행정망 내부 (org-environment.yaml network_zones.internal)
     audience: [직원만, 타기관공무원]   # ①②
     external_outbound: none
     llm_api: "직접 불가 → 망연계 프록시 / DMZ 중계 / 내부 sLLM"
     cdn: "전부 self-host(템플릿 내장)"
     external_api: "불가 → 망연계 / 데이터 사전반입"
-    packages: "오프라인 미러(pip/npm/RPM)"
+    packages: "org-environment.yaml network_zones.internal.package_mirror"
     gvskb_intel: "offline 번들 (GVSKB_MODE=offline)"
-    auth: "Keycloak(OIDC) / GPKI 연계 (직접 구현 금지)"
+    auth: "org-environment.yaml network_zones.internal.auth_provider (직접 구현 금지)"
     server_db_location: 행정망내부
     gate: 표준_내부심사
     allowed_tracks: [local-automation, streamlit-internal, fastapi-web, react-fastapi, node-api]
     gvskb_profile: internal-db-query
     note: "타기관 공무원 접근은 망연계 이슈 — 1차 단순처리, hybrid 제외"
 
-  external:                     # 외부망 / DMZ (대민)
+  external:                     # 외부망 / DMZ, 대민 (org-environment.yaml network_zones.external). has_external_zone=false면 이 존 비활성.
     audience: [시민]                  # ③ (직원 관리 포함 가능)
     external_outbound: "통제된 허용"
     llm_api: "승인 경로 가능 (호출률·비용 방어 필수)"
     cdn: "self-host 권장"
     external_api: 조건부
-    packages: "오프라인 미러(동일)"
+    packages: "org-environment.yaml network_zones.external.package_mirror"
     gvskb_intel: "온라인 갱신 가능"
-    auth: "시민=시민인증(간편·본인확인)·익명 / 관리자(공무원)=ID·PW, 외부망 서버에서 관리"
+    auth: "org-environment.yaml network_zones.external.auth_provider (시민/관리자 계정 분리, 외부망 서버에서 관리)"
     server_db_location: 외부망            # 서비스·관리·DB 전부 외부망
     gate: "DAST·WAF 필수, 건별 위원회 승인"
     allowed_tracks: [fastapi-web, react-fastapi, node-api]   # Track S 금지

@@ -42,7 +42,7 @@
 
 ## 절대 원칙
 
-1. **보안은 게이트지 공기가 아니다.** 메인 루프·solution-architect는 gvskb를 호출하지 않는다. 예방은 템플릿+이 파일(수동), 검증은 security-reviewer 한 번.
+1. **보안은 게이트지 공기가 아니다.** 메인 루프·solution-architect는 gvskb MCP 도구(scan_path 등)를 직접 호출해 즉흥적으로 보안 판단을 내리지 않는다 — 검증은 security-reviewer 한 번. **예외: 패키지 설치**는 메인 루프가 `.claude/enforcement/gvskb_gate.py`/`.js`를 통해 매번 gvskb를 거친다. 이건 에이전트가 그때그때 판단하는 게 아니라, doc5/doc6 집행계약을 코드로 고정해 둔 결정론적 스크립트라 "공기처럼 상시 호출"이 아니라 "정해진 게이트를 자동으로 통과"하는 것이다.
 2. **검사 로직 자체 구현 금지.** gvskb가 엔진, 하네스는 반환값만 코칭으로 번역.
 3. **공무원이 아는 것만 묻는다.** 전문 결정은 정한다. 데이터 등급은 질문 아닌 설명·코드 증거로.
 4. **존 결정자 = "시민이 접근하나?"** 대민이면 서비스·관리·DB 전부 외부망, Track S 금지, DAST·WAF·**위원회 승인 필수(자동 승인 금지)**.
@@ -56,12 +56,24 @@
 - SQL: ORM/파라미터 바인딩만, 문자열 조립·`os.system` 금지
 - XSS: 템플릿 이스케이프 유지, `debug=True` 금지
 - 외부통신: 행정망이면 외부 호출 금지(CDN·LLM·외부API self-host/망연계), 필요 시 예외신청
-- 패키지: `references/package-catalog.yaml` 승인 목록만, 락파일·`npm ci --ignore-scripts`
-- 인증: 직접 구현 금지 — Keycloak(OIDC), 대민 관리자는 ID/PW
+- 패키지: 새 패키지는 `pip install`/`npm install`을 직접 쓰지 않는다 — 반드시
+  `python .claude/enforcement/gvskb_gate.py install <이름>`(Python) 또는
+  `node .claude/enforcement/gvskb_gate.js install <이름>`(Node)를 거친다. 이 게이트가
+  `references/org-packages.yaml`(로컬 카탈로그)과 gvskb 판정(악성·미존재·KEV·쿨다운 등)을
+  모드(`org-environment.yaml enforcement.mode`)에 따라 실제로 통과/차단시킨다
+  (판단만 하고 설치는 AI가 알아서 하는 방식이 아니다 — 게이트가 곧 설치 명령이다).
+  gvskb 자체가 개발 PC에 없으면 게이트가 종료코드 65(EXIT_NOT_INSTALLED)로 알려준다 —
+  이때 **메인 루프가 임의로 설치하지 않는다.** 사용자에게 "보안검증 도구(gvskb)가
+  설치되어 있지 않습니다. `pip install git+https://github.com/Lex6won/vibecode-checker.git`
+  로 설치할까요?"라고 물어 동의를 받은 뒤에만 그 명령을 실행하고, 설치 후 원래
+  하려던 게이트 호출을 재시도한다. 사용자가 거부하면 그 패키지 설치도 진행하지 않는다
+  (게이트를 우회해 바로 pip/npm install로 넘어가지 않는다).
+- 인증: 직접 구현 금지 — org-environment.yaml의 auth_provider(기본 Keycloak/OIDC), 대민 관리자는 ID/PW
 
 ## 가드레일 references (기계규칙)
 
-- `deploy-context.yaml`(행정망/외부망 분기) · `data-traffic-light.yaml`(데이터 등급) · `approved-tracks.yaml`(Track) · `runtime-env.yaml`(런타임) · `package-catalog.yaml`(승인·차단) · `maturity-model.md`(성숙도) · `closed-network.md` · `exception-policy.md`
+- `org-environment.yaml`(기관 환경 — 런타임·DBMS·존·레지스트리·승인주체·enforcement 모드, **기관마다 이 파일만 교체**) · `org-packages.yaml`(승인·차단 패키지, **기관마다 이 파일만 교체**) · `deploy-context.yaml`(행정망/외부망 분기 로직) · `data-traffic-light.yaml`(데이터 등급) · `approved-tracks.yaml`(Track) · `maturity-model.md`(성숙도) · `closed-network.md` · `exception-policy.md`
+- `enforcement/gvskb_gate.py`·`.js`(기계코드) — 패키지 설치를 실제로 통과/차단시키는 유일한 지점. 판정 로직의 근거는 `하네스_집행계약.md`
 
 ## 산출물 (성숙도 비례)
 

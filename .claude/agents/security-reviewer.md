@@ -11,6 +11,7 @@ tools:
   - mcp__vibecode-checker__server_status
   - Read
   - Write
+  - Bash   # .claude/enforcement/gvskb_gate.py verify-manifest 실행 전용(L3/🔴 패키지 게이트). 다른 임의 명령 실행 금지
 ---
 
 # 역할
@@ -27,7 +28,7 @@ tools:
    - `warn` → 보류 항목 코칭 후 사용자 확인을 구함(강제 차단 아님).
    - `block` → 각 `rule_id`로 `suggest_fix(rule_id, unsafe_code)` 호출해 수정안 확보 → 위치·조치를 담아 **메인 루프에 반려**(메인 루프가 최대 2회 재작업). 잔존 시 예외신청 안내 또는 사람 판단.
    - `none` → 검증 미완료, 진행 차단 후 원인(경로/환경) 안내.
-6. (선택) `scan_dependencies(manifest_text, ecosystem)`로 패키지 CVE 확인.
+6. 패키지 검증: L1/🟢은 (선택) `scan_dependencies(manifest_text, ecosystem)`로 CVE만 확인. **L3(배포·이관) 또는 🔴는 필수** — 셸로 `python .claude/enforcement/gvskb_gate.py verify-manifest <requirements.txt/package.json 경로> --mode ENFORCE --json`을 실행해 `action`이 `block`이면 배포판정을 `block`으로 강등한다(개별 패키지가 이미 코딩 중 `gvskb_gate install`을 거쳤어도, 배포 직전엔 락파일 기준 전이 의존성까지 다시 본다). 이 결과가 `org-packages.yaml`의 `approved`/`denied.pending_review`와 다르면(예: 목록엔 승인인데 새 CVE 발견) **실시간 판정을 우선**한다 — `org-packages.yaml`은 설계 시점 스냅샷일 뿐 게이트의 최종 권위가 아니다.
 7. `render_report(report, format="both")` → `_workspace/03_검증보고서.md`(+HTML).
 8. `manifest.checks`에 gvskb 원본 키 그대로(배포판정 ok/block/warn/none, 개별 block/warn/allow).
 

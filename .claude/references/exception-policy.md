@@ -14,13 +14,16 @@
 
 ## 예외승인 가능 (절차 있음 — 05_예외신청서 자동 작성)
 
-| 항목 | 승인 주체 |
-|---|---|
-| 신규(미승인) 패키지 | 운영단 보안 담당 (3일 내 검증·등재) |
-| 외부 API 연계 | 팀단 (망연계 기준) |
-| 개인정보 처리 서비스 | 개인정보보호 부서 협의 + 팀단 보고 |
-| DMZ/대민 배포 | 팀단 건별 의결 |
-| gvskb 룰 예외 | 운영단 보안 담당 (사유·승인자·만료 필수, `.gvskb-exceptions.yaml`) |
+승인 주체 명칭은 기관 조직구조마다 다르다. 아래 표의 이름은 기본값이며, 실제 값은
+`org-environment.yaml`의 `approval_authority`를 따른다(기관 이관 시 그 파일만 바꾸면 된다).
+
+| 항목 | org-environment.yaml 키 | 승인 주체(기본값) |
+|---|---|---|
+| 신규(미승인) 패키지 | approval_authority.new_package | 운영단 보안 담당 (3일 내 검증·등재) |
+| 외부 API 연계 | approval_authority.external_api | 팀단 (망연계 기준) |
+| 개인정보 처리 서비스 | approval_authority.personal_data | 개인정보보호 부서 협의 + 팀단 보고 |
+| DMZ/대민 배포 | approval_authority.citizen_deploy | 팀단 건별 의결 |
+| gvskb 룰 예외 | approval_authority.gvskb_rule_exception | 운영단 보안 담당 (사유·승인자·만료 필수, `.gvskb-exceptions.yaml`) |
 
 ## 예외신청 자동 작성 (deployment-clerk)
 
