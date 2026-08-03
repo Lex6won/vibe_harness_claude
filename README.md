@@ -61,10 +61,10 @@
 gg-vibecode/
 ├── .claude/
 │   ├── CLAUDE.md                     # 지능 중심: 원칙·성숙도·흐름·질문프레임·예방레일
-│   ├── .mcp.json                     # vibecode-checker(gvskb) MCP + GVSKB_POLICIES_DIR 연결
+│   ├── .mcp.json                     # vibecode-checker(gvskb) MCP 연결
 │   ├── agents/                       # 비대화·격리 작업 전담 (3)
 │   ├── skills/                       # 진입·질문 프레임 (2)
-│   ├── references/                   # 정책·운영·보안 기계규칙 (8) + policies/(gvskb 검사 프로파일 5)
+│   ├── references/                   # 정책·운영·보안 기계규칙 (8) — gvskb 검사 프로파일은 체커 내장 사용
 │   ├── enforcement/                  # gvskb_gate.py·.js — 패키지 설치 실제 집행
 │   ├── golden-templates/             # 레일 내장 실행 템플릿 + 변형 가이드
 │   └── assets/                       # 산출물 템플릿·코칭 메시지
@@ -305,15 +305,15 @@ _workspace/
 main 루프가 구현 단계에서 `org-environment.yaml`의 `container.base_images` 값으로 치환합니다.
 새 기관의 레지스트리에 해당 태그 이미지가 실제로 존재해야 동작합니다.
 
-### 4. `references/policies/` — gvskb 검사 강도 프로파일 (선택)
+### 4. gvskb 검사 강도 프로파일 — 기본은 손댈 필요 없음
 
-vibecode-checker 저장소를 건드리지 않고, `.mcp.json`의 `GVSKB_POLICIES_DIR`로 이 폴더를
-가리켜 검사 프로파일을 하네스가 직접 소유합니다. 기본값(`internal-db-query` 등 4종 + 개발 중
-경량 점검용 `dev-quick`)을 그대로 써도 되고, 기관 보안 기준이 다르면 `severity_min`·
-`category_overrides`만 조정하면 됩니다 — 체커 쪽 변경이 필요 없습니다.
-`GVSKB_POLICIES_DIR`는 `${CLAUDE_PROJECT_DIR:-.}/.claude/references/policies`처럼
-프로젝트 루트 변수로 적어야 합니다 — 순수 상대경로(`.claude/...`)는 MCP 서버 실행 위치에
-따라 해석되지 않아 프로파일이 조용히 기본값으로 대체될 수 있습니다.
+`internal-db-query` 등 4종 + 개발 중 경량 점검용 `dev-quick`은 vibecode-checker에 **내장**되어
+있어 하네스가 별도 사본을 관리하지 않습니다(`GVSKB_POLICIES_DIR` 미설정). 기관 보안 기준이
+체커 내장 프로필과 달라 `severity_min`·`category_overrides`를 자체적으로 조정해야 하면, 그때만
+`references/policies/`에 YAML 사본을 두고 `.mcp.json`의 `env`에
+`"GVSKB_POLICIES_DIR": "${CLAUDE_PROJECT_DIR:-.}/.claude/references/policies"`를 추가해
+재도입할 수 있습니다(순수 상대경로는 MCP 서버 실행 위치에 따라 해석되지 않으니 반드시
+`${CLAUDE_PROJECT_DIR:-.}` 형태로 적을 것).
 
 ### 알려진 제약 (핵심 2개 파일 교체만으로는 안 끝나는 부분)
 

@@ -80,9 +80,10 @@
 
 - `org-environment.yaml`(기관 환경 — 런타임·DBMS·존·레지스트리·승인주체·enforcement 모드, **기관마다 이 파일만 교체**) · `org-packages.yaml`(승인·차단 패키지, **기관마다 이 파일만 교체**) · `deploy-context.yaml`(행정망/외부망 분기 로직) · `data-traffic-light.yaml`(데이터 등급) · `approved-tracks.yaml`(Track) · `maturity-model.md`(성숙도) · `closed-network.md` · `exception-policy.md`
 - `enforcement/gvskb_gate.py`·`.js`(기계코드) — 패키지 설치를 실제로 통과/차단시키는 유일한 지점. 판정 로직의 근거는 `하네스_집행계약.md`
-- `references/policies/*.yaml` — gvskb 검사 프로파일의 **하네스 자체 소유 사본**(`GVSKB_POLICIES_DIR`로 연결,
-  `.mcp.json` 참고). vibecode-checker 저장소를 건드리지 않고 기관이 이 폴더만 바꿔 검사 강도를 조정한다.
-  `dev-quick.yaml`이 개발 중 경량 점검용(신설), 나머지 4개는 시나리오별 표준 프로파일.
+- gvskb 검사 프로파일(`dev-quick`=개발 중 경량 점검, 나머지 4개=시나리오별 표준)은 vibecode-checker에
+  **내장**되어 있어 하네스가 사본을 두지 않는다(`GVSKB_POLICIES_DIR` 미설정). 기관 보안 기준이 내장
+  프로필과 달라야 할 때만 `references/policies/*.yaml`을 만들고 `.mcp.json`에 `GVSKB_POLICIES_DIR`를
+  다시 연결한다(README "이식하기" 4번 참고).
 
 ## 산출물 (성숙도 비례)
 
