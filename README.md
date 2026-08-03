@@ -4,6 +4,15 @@
 
 이 저장소는 [`revfactory/harness-100`](https://github.com/revfactory/harness-100)의 "전문 에이전트 팀 + 오케스트레이터 스킬 + 구조화 산출물" 방식을 참고하되, 범용 하네스 모음이 아니라 **행정망/외부망, 공공 보안, 승인 패키지, 배포·이관 산출물**을 지키는 공공 특화 하네스입니다. 특히 **규칙 중심·심플·토큰 효율**을 살린 Lean 설계로 개편했습니다.
 
+## 관련 저장소 (전부 GitHub 주소로 씁니다)
+
+로컬 사본을 따로 만들지 말고, 항상 아래 두 저장소를 원본으로 clone·설치해서 씁니다.
+
+| 저장소 | 역할 | 사용법 |
+|---|---|---|
+| 이 저장소(`vibe_harness_claude`) | Claude Code용 하네스(`.claude/`) | `git clone https://github.com/Lex6won/vibe_harness_claude.git` |
+| [`vibecode-checker`](https://github.com/Lex6won/vibecode-checker) | 보안검증 엔진(gvskb) — 이 하네스가 유일하게 신뢰하는 검사 엔진 | `pip install git+https://github.com/Lex6won/vibecode-checker.git` |
+
 ## 하네스 주제
 
 **공공 바이브코딩 실행 하네스**입니다.
@@ -42,20 +51,24 @@
 | 골든 템플릿 | 2개 실코드 + 4개 가이드 |
 | 성숙도 단계 | L0~L4 |
 | 주요 네트워크 프로파일 | 행정망 / DMZ·외부망 |
-| 검증 엔진 | vibecode-checker(gvskb) MCP |
+| 검증 엔진 | [vibecode-checker(gvskb)](https://github.com/Lex6won/vibecode-checker) MCP |
+| 패키지 설치 게이트 | `enforcement/gvskb_gate.py`·`.js` (실제 pip/npm install을 통과/차단) |
+| 보안검사 강도 | quick(개발 중)/standard(구현 완료)/full(배포 준비) 3모드 |
 
 ## 전체 구조
 
 ```text
 gg-vibecode/
-└── .claude/
-    ├── CLAUDE.md                     # 지능 중심: 원칙·성숙도·흐름·질문프레임·예방레일
-    ├── .mcp.json                     # vibecode-checker(gvskb) MCP
-    ├── agents/                       # 비대화·격리 작업 전담 (3)
-    ├── skills/                       # 진입·질문 프레임 (2)
-    ├── references/                   # 정책·운영·보안 기계규칙 (8)
-    ├── golden-templates/             # 레일 내장 실행 템플릿 + 변형 가이드
-    └── assets/                       # 산출물 템플릿·코칭 메시지
+├── .claude/
+│   ├── CLAUDE.md                     # 지능 중심: 원칙·성숙도·흐름·질문프레임·예방레일
+│   ├── .mcp.json                     # vibecode-checker(gvskb) MCP + GVSKB_POLICIES_DIR 연결
+│   ├── agents/                       # 비대화·격리 작업 전담 (3)
+│   ├── skills/                       # 진입·질문 프레임 (2)
+│   ├── references/                   # 정책·운영·보안 기계규칙 (8) + policies/(gvskb 검사 프로파일 5)
+│   ├── enforcement/                  # gvskb_gate.py·.js — 패키지 설치 실제 집행
+│   ├── golden-templates/             # 레일 내장 실행 템플릿 + 변형 가이드
+│   └── assets/                       # 산출물 템플릿·코칭 메시지
+└── docs/                             # 레지스트리·체커 팀과의 집행계약·결정 기록
 ```
 
 핵심 진입점은 다음입니다.
@@ -76,7 +89,7 @@ gg-vibecode/
    → deploy-packager       배포·이관 핸드오프 산출물 (L3)
 ```
 
-메인 루프는 gvskb 도구를 갖지 않습니다 — 보안 스캔은 오직 security-reviewer를 통해서만 이뤄집니다(보안은 게이트지 공기가 아니다).
+메인 루프는 gvskb MCP 도구(scan_path 등)를 직접 호출해 즉흥적으로 보안 판단을 내리지 않습니다 — 코드 검사는 오직 security-reviewer를 통해서만 이뤄집니다(보안은 게이트지 공기가 아니다). 단 하나의 예외가 있습니다: **패키지 설치**는 메인 루프가 `.claude/enforcement/gvskb_gate.py`(pip)·`.js`(npm)라는 고정된 결정론적 스크립트를 통해 매번 gvskb를 거칩니다. 에이전트가 그때그때 판단하는 게 아니라 정해진 규칙(카탈로그 우선순위·모드별 차단기준)을 코드로 고정해 둔 것이라 "즉흥 호출"이 아닙니다.
 
 ## 사용 방법
 
@@ -170,10 +183,11 @@ L3 배포·이관 준비로 승격하면 다음이 추가됩니다.
 
 ```text
 _workspace/
-├── 02_설계서.md          # solution-architect
-├── 03_검증보고서.md       # security-reviewer (gvskb)
-├── 04_배포신청서.md       # deploy-packager
-└── 05_예외신청서.md       # (해당 시)
+├── 02_설계서.md                       # solution-architect
+├── source/.check-reports/YYYY-MM-DD_HHMM_보안점검.{md,html,json}  # security-reviewer full 모드(제출 자료 ①, gvskb가 소스 루트 옆에 자동 저장)
+├── gate-verdict.json                  # gvskb_gate verify-manifest 원본(제출 자료 ②)
+├── 04_배포신청서.md                    # deploy-packager, 위 2종을 첨부로 링크
+└── 05_예외신청서.md                    # (해당 시)
 ```
 
 예상 `vibecode-manifest.json` 일부:
@@ -233,7 +247,7 @@ _workspace/
 | `gg-dashboard` | S | Streamlit 내부 대시보드 (실코드) |
 | gg-upload / gg-rag / gg-spa / gg-node-api | A/B/N | `_variants.md` 파생 가이드 |
 
-각 템플릿은 레일을 내장합니다: `/health`·보안헤더·`.env.example`·의존성 고정(승인 패키지)·내부 Harbor 베이스+HEALTHCHECK·파라미터 바인딩·인증 위임(Keycloak)·외부 CDN 금지·프로젝트 `CLAUDE.md`.
+각 템플릿은 레일을 내장합니다: `/health`·보안헤더·`.env.example`·의존성 고정(승인 패키지, `gvskb_gate` 경유 설치)·기관 내부 레지스트리 베이스(`org-environment.yaml`, 기본 Harbor)+HEALTHCHECK·파라미터 바인딩·인증 위임(`org-environment.yaml`의 auth_provider, 기본 Keycloak)·외부 CDN 금지·프로젝트 `CLAUDE.md`.
 
 ## Quality Standards
 
@@ -252,7 +266,7 @@ _workspace/
 
 - 행정망은 외부통신, CDN, 외부 SaaS SDK를 기본 금지합니다.
 - 대민 서비스는 DMZ/외부망 후보이며 자동 승인하지 않습니다(WAF/DAST/위원회 승인 플래그).
-- 보안검사 로직은 하네스가 직접 구현하지 않고 `vibecode-checker` 결과를 사용합니다(3단 폴백: MCP → CLI → 수동).
+- 보안검사 로직은 하네스가 직접 구현하지 않고 [`vibecode-checker`](https://github.com/Lex6won/vibecode-checker) 결과를 사용합니다(3단 폴백: MCP → CLI → 수동).
 
 ## Package Policy
 
@@ -260,7 +274,9 @@ _workspace/
 
 - 미승인 패키지는 즉시 차단이 아니라 승인 대체안 먼저 제시 → 불가 시 예외신청.
 - 강차단: Critical CVE·타이포스쿼트·외부 BaaS 직접 의존·CDN 운영 의존·postinstall 실행·임의 코드 실행.
-- 게이트에서 gvskb `scan_dependencies`가 락파일 트리를 실제 검증합니다.
+- **실제 집행은 `enforcement/gvskb_gate.py`·`.js`가 담당합니다** — 코딩 중 새 패키지는 이 게이트를
+  거쳐야 설치되고(카탈로그 → gvskb 절대차단 → 모드별 판정 순), 배포 준비(full 모드) 시에는
+  `gvskb_gate.py verify-manifest`가 락파일 트리 전체를 다시 검증해 배포 제출 자료에 남깁니다.
 
 ## 다른 시군/기관으로 이식하기
 
@@ -289,7 +305,14 @@ _workspace/
 main 루프가 구현 단계에서 `org-environment.yaml`의 `container.base_images` 값으로 치환합니다.
 새 기관의 레지스트리에 해당 태그 이미지가 실제로 존재해야 동작합니다.
 
-### 알려진 제약 (2개 파일 교체만으로는 안 끝나는 부분)
+### 4. `references/policies/` — gvskb 검사 강도 프로파일 (선택)
+
+vibecode-checker 저장소를 건드리지 않고, `.mcp.json`의 `GVSKB_POLICIES_DIR`로 이 폴더를
+가리켜 검사 프로파일을 하네스가 직접 소유합니다. 기본값(`internal-db-query` 등 4종 + 개발 중
+경량 점검용 `dev-quick`)을 그대로 써도 되고, 기관 보안 기준이 다르면 `severity_min`·
+`category_overrides`만 조정하면 됩니다 — 체커 쪽 변경이 필요 없습니다.
+
+### 알려진 제약 (핵심 2개 파일 교체만으로는 안 끝나는 부분)
 
 - 골든 템플릿 폴더명(`gg-webapp` 등)과 스킬명(`gg-vibecode`)은 여전히 "gg-" 접두사가 하드코딩되어
   있습니다. 기능상 동작에는 지장이 없지만, 완전한 브랜드 교체를 원하면 별도 리네이밍이 필요합니다.
@@ -306,10 +329,13 @@ gvskb scan <프로젝트 경로> --profile internal-db-query --fail-on block
 
 ## Current Status
 
-- 하네스 구조(메인 루프 + 에이전트 3), 성숙도 모델, 패키지 카탈로그 정리 완료
-- 골든 템플릿 2종 레일 내장 실코드 + 4종 변형 가이드 완료
+- 하네스 구조(메인 루프 + 에이전트 3), 성숙도 모델, 골든 템플릿 2종 실코드 + 4종 변형 가이드 완료
 - v0.5 질문 프레임(루브릭+창의질문+되짚기) 적용
-- 남은 과제: Python/Node 설치 환경에서 골든 템플릿 smoke test, 실제 L1 프로젝트 end-to-end 실행 검증
+- **기관 이식성**: 기관마다 달라지는 값을 `org-environment.yaml`·`org-packages.yaml` 두 파일로 통합(다른 시군/기관으로 이식하기 참고)
+- **패키지 설치 집행**: `enforcement/gvskb_gate.py`·`.js`가 gvskb(vibecode-checker)·gg-trusted-registry 판정을 실제 pip/npm install 허용·차단으로 집행(카탈로그 우선순위, MONITOR/WARN/ENFORCE 모드, 사전승인 코드 기반 예외)
+- **3단계 보안검사**: 개발 중(quick, `dev-quick` 프로파일)/구현 완료(standard)/배포 준비(full, 제출 자료 2종 고정)를 `security-reviewer`가 모드별로 수행
+- **gg-trusted-registry 연동**: gvskb가 내부적으로 레지스트리를 조회하는 구조(하네스는 직접 조회하지 않음). 결정·회신 이력은 `docs/`에 있음
+- 남은 과제: 실제 MCP 세션에서 `dev-quick` 프로파일 로드 확인, golden template smoke test, L1 프로젝트 end-to-end 실행 검증
 
 ## License
 
