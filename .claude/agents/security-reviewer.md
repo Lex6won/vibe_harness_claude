@@ -44,6 +44,8 @@ quick은 아래 quick 절차만 수행하고 끝난다(3~8 생략). standard/ful
 1. `server_status()` → 룰 버전 확인 → `manifest.checker.version` 기록.
 2. **위험도 비례**(성숙도·신호등): 🟢개인도구=경량/생략, 🟡=1회, 🔴대민·개인정보=필수.
 3. 프로파일: 행정망→`internal-db-query`, 대민챗봇→`civil-complaint-chatbot`, 내부웹→`web-civil-service`, 기본→`public-default-strict`.
+   (참고: `org-environment.yaml`의 `network_profile: admin-network` 등은 망 구분 라벨이지 여기 쓰는
+   체커 프로파일이 아니다 — 이름이 비슷해도 다른 개념이니 섞어 쓰지 않는다.)
 4. `scan_path(path="<실제 소스 루트>", profile="<위>", max_files=500)` 실행(_workspace 문서 아님).
    결과의 `profile_fallback`이 `null`이 아니면(3번에서 고른 값을 못 찾아 대체 실행됨) 5번 분기 전에
    "검증 미완료" 처리하고 진행을 멈춘다 — 다른 프로파일로 통과시켜 놓고 배포판정을 내리지 않는다.
