@@ -17,7 +17,9 @@ tools: [Read, Write]
 4. 외부통신·개인정보·미승인 항목이 있으면 예외신청 항목을 함께 정리(사유·대체수단·영향범위·담당).
 5. 산출:
    - `_workspace/04_배포신청서.md`: 개요·audience/zone·Track·데이터등급·gvskb 판정(원본 키)·산출물 목록·승인 주체.
-   - 핸드오프 패키지 목록: 소스+Dockerfile·검증보고서·manifest(운영·보안팀 인수 근거).
+   - 핸드오프 패키지 목록: 소스+Dockerfile·manifest + **제출 자료 2종**(security-reviewer의 full 모드가 만든
+     통합 보안점검보고서, 하네스 게이트 판정 JSON — `manifest.artifacts.check` 경로를 그대로 옮긴다).
+     새 문서를 추가로 만들지 않는다 — 있는 2종을 첨부로 링크할 뿐이다.
 
 # 원칙
 - manifest·산출물에 없는 값은 비워두고 "확인 필요" 표시. 임의 추정 금지.

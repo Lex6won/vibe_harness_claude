@@ -35,8 +35,14 @@
 2. **구상 도출**: `skills/socratic-interview`(루브릭+창의질문+되짚기)로 화면·행동·입력→출력·MVP를 끌어낸다. **기능만 묻고**, 기술은 안 묻는다. 개인정보는 냉질문 말고 설명에서 탐지. → `_workspace/01_요구서.md`, manifest 초기화.
 3. **설계**: `solution-architect` 에이전트 호출 → Track·인증·DB·runtime·보안제약 결정 → `_workspace/02_설계서.md`. 결과를 한 줄로 통지("표준 방식(FastAPI)으로 만들게요").
 4. **구현**: `golden-templates/`에서 Track에 맞는 템플릿을 골라 **그 안에서** 기능을 구현한다(아래 예방 레일 준수). 사용자와 결과 보며 반복.
-5. **검증**(사용자가 "안전한지"/"배포" 또는 L3): `security-reviewer` 에이전트 호출 → gvskb 게이트. block이면 수정안 받아 4로 재작업(최대 2회).
-6. **배포·이관**(L3): `deploy-packager` 에이전트 호출 → 배포신청·핸드오프 산출물.
+   - 구현 도중 사용자가 "중간 점검해줘"라고 하면 `security-reviewer`를 **quick 모드**로 호출한다(전체 룰셋
+     아님 — SQLi·명령/코드실행·경로조작·비밀값·개인정보 등 핵심만, 문서 저장 없이 콘솔 코칭만). 자동으로
+     걸지 않는다 — 사용자가 요청할 때만(토큰·시간 낭비 방지).
+5. **검증**: 구현이 끝나 사용자가 "안전한지 봐줘"라고 하면 `security-reviewer`를 **standard 모드**로,
+   배포·이관 준비(L3) 또는 🔴(대민·개인정보)면 **full 모드**로 호출한다. full 모드가 배포 제출용
+   최종 자료(통합 보안점검보고서 + 게이트 판정 JSON, 2종뿐)를 만든다. block이면 수정안 받아 4로
+   재작업(최대 2회).
+6. **배포·이관**(L3): `deploy-packager` 에이전트 호출 → 배포신청서 + 위 2종 첨부로 핸드오프 산출물.
 
 **스코프 모드**: "보안검사만"→5 단독 / "배포신청만"→6 단독(기존 manifest) / "빨리"→기본값 채우고 흐름 확인만.
 
@@ -74,6 +80,9 @@
 
 - `org-environment.yaml`(기관 환경 — 런타임·DBMS·존·레지스트리·승인주체·enforcement 모드, **기관마다 이 파일만 교체**) · `org-packages.yaml`(승인·차단 패키지, **기관마다 이 파일만 교체**) · `deploy-context.yaml`(행정망/외부망 분기 로직) · `data-traffic-light.yaml`(데이터 등급) · `approved-tracks.yaml`(Track) · `maturity-model.md`(성숙도) · `closed-network.md` · `exception-policy.md`
 - `enforcement/gvskb_gate.py`·`.js`(기계코드) — 패키지 설치를 실제로 통과/차단시키는 유일한 지점. 판정 로직의 근거는 `하네스_집행계약.md`
+- `references/policies/*.yaml` — gvskb 검사 프로파일의 **하네스 자체 소유 사본**(`GVSKB_POLICIES_DIR`로 연결,
+  `.mcp.json` 참고). vibecode-checker 저장소를 건드리지 않고 기관이 이 폴더만 바꿔 검사 강도를 조정한다.
+  `dev-quick.yaml`이 개발 중 경량 점검용(신설), 나머지 4개는 시나리오별 표준 프로파일.
 
 ## 산출물 (성숙도 비례)
 

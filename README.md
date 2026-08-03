@@ -82,10 +82,12 @@ gg-vibecode/
 
 ### 1. 하네스 복사
 
-새 프로젝트에 `.claude`를 복사합니다.
+GitHub에서 받아 새 프로젝트에 `.claude`를 복사합니다. 로컬 사본을 만들지 말고
+항상 이 저장소를 원본으로 씁니다(기관 갱신·업데이트를 그대로 따라가기 위함).
 
 ```powershell
-Copy-Item -Recurse .claude C:\path\to\your-project\.claude
+git clone https://github.com/Lex6won/vibe_harness_claude.git
+Copy-Item -Recurse vibe_harness_claude\.claude C:\path\to\your-project\.claude
 ```
 
 ### 2. AI 도구에서 시작
