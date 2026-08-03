@@ -53,7 +53,10 @@
         "properties": {
           "item": { "type": "string" },
           "reason": { "type": "string" },
-          "approved_by": { "type": "string" },
+          "approved_by": {
+            "type": "string",
+            "description": "팀명(직책)만 기록 — 실명·사번·이메일 금지(커밋될 수 있는 파일)"
+          },
           "expires": { "type": "string" }
         }
       }
