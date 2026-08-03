@@ -311,6 +311,9 @@ vibecode-checker 저장소를 건드리지 않고, `.mcp.json`의 `GVSKB_POLICIE
 가리켜 검사 프로파일을 하네스가 직접 소유합니다. 기본값(`internal-db-query` 등 4종 + 개발 중
 경량 점검용 `dev-quick`)을 그대로 써도 되고, 기관 보안 기준이 다르면 `severity_min`·
 `category_overrides`만 조정하면 됩니다 — 체커 쪽 변경이 필요 없습니다.
+`GVSKB_POLICIES_DIR`는 `${CLAUDE_PROJECT_DIR:-.}/.claude/references/policies`처럼
+프로젝트 루트 변수로 적어야 합니다 — 순수 상대경로(`.claude/...`)는 MCP 서버 실행 위치에
+따라 해석되지 않아 프로파일이 조용히 기본값으로 대체될 수 있습니다.
 
 ### 알려진 제약 (핵심 2개 파일 교체만으로는 안 끝나는 부분)
 
