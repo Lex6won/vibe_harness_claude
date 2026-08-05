@@ -143,5 +143,5 @@ automation:
     "cooldown_hold": "MONITOR=통과(기록) · WARN=경고 · ENFORCE=차단"
     "unknown / error": "MONITOR=통과(기록) · WARN=경고 · ENFORCE=차단"
     "checked_clean / registry_approved(checked=true)": "항상 통과"
-  precondition: "행정망 기본값 GVSKB_MODE=offline에서는 `gvskb update-intel` 로컬 인텔 캐시가 최신이어야 checked_clean이 나온다. 캐시가 없거나 오래되면 verdict가 unknown/checked_stale로 내려가 ENFORCE 모드에서 차단될 수 있다 — 캐시 갱신 주기를 모니터링할 것."
+  precondition: "GVSKB_MODE 기본값은 online(.mcp.json의 ${GVSKB_MODE:-online})이라 실시간 조회가 기본이다. 행정망처럼 실제 폐쇄망이라 GVSKB_MODE=offline을 환경변수로 켠 경우에만 `gvskb update-intel` 로컬 인텔 캐시가 최신이어야 checked_clean이 나온다. 그 경우 캐시가 없거나 오래되면 verdict가 unknown/checked_stale로 내려가 ENFORCE 모드에서 차단될 수 있다 — 캐시 갱신 주기를 모니터링할 것."
   mode_config: "org-environment.yaml의 enforcement.mode(MONITOR/WARN/ENFORCE 기본값)와 GVSKB_GATE_MODE 환경변수로 조정한다."

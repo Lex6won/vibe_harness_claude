@@ -59,9 +59,9 @@
 
 ```text
 gg-vibecode/
+├── .mcp.json                         # vibecode-checker(gvskb) MCP 연결 — 반드시 프로젝트 루트(.claude/ 밖)
 ├── .claude/
 │   ├── CLAUDE.md                     # 지능 중심: 원칙·성숙도·흐름·질문프레임·예방레일
-│   ├── .mcp.json                     # vibecode-checker(gvskb) MCP 연결
 │   ├── agents/                       # 비대화·격리 작업 전담 (3)
 │   ├── skills/                       # 진입·질문 프레임 (2)
 │   ├── references/                   # 정책·운영·보안 기계규칙 (8) — gvskb 검사 프로파일은 체커 내장 사용
@@ -70,6 +70,10 @@ gg-vibecode/
 │   └── assets/                       # 산출물 템플릿·코칭 메시지
 └── docs/                             # 레지스트리·체커 팀과의 집행계약·결정 기록
 ```
+
+**`.mcp.json`은 반드시 프로젝트 루트에 있어야 합니다.** `.claude/` 안에 두면 Claude Code가
+아예 읽지 않습니다(프로젝트 범위 MCP 설정의 공식 위치는 루트뿐입니다) — 아래 "하네스 복사" 단계에서
+이 파일을 `.claude/`와 별도로 루트에 복사하는 이유입니다.
 
 핵심 진입점은 다음입니다.
 
@@ -95,13 +99,17 @@ gg-vibecode/
 
 ### 1. 하네스 복사
 
-GitHub에서 받아 새 프로젝트에 `.claude`를 복사합니다. 로컬 사본을 만들지 말고
-항상 이 저장소를 원본으로 씁니다(기관 갱신·업데이트를 그대로 따라가기 위함).
+GitHub에서 받아 새 프로젝트에 `.claude`와 `.mcp.json`을 **둘 다** 복사합니다. 로컬 사본을 만들지
+말고 항상 이 저장소를 원본으로 씁니다(기관 갱신·업데이트를 그대로 따라가기 위함).
 
 ```powershell
 git clone https://github.com/Lex6won/vibe_harness_claude.git
 Copy-Item -Recurse vibe_harness_claude\.claude C:\path\to\your-project\.claude
+Copy-Item vibe_harness_claude\.mcp.json C:\path\to\your-project\.mcp.json
 ```
+
+`.mcp.json`을 빠뜨리면 `.claude/`가 다 있어도 vibecode-checker MCP가 연결되지 않습니다 — 반드시
+프로젝트 **루트**에 있어야 합니다(`.claude/` 안이 아님).
 
 ### 2. AI 도구에서 시작
 
@@ -319,7 +327,11 @@ main 루프가 구현 단계에서 `org-environment.yaml`의 `container.base_ima
 
 - 골든 템플릿 폴더명(`gg-webapp` 등)과 스킬명(`gg-vibecode`)은 여전히 "gg-" 접두사가 하드코딩되어
   있습니다. 기능상 동작에는 지장이 없지만, 완전한 브랜드 교체를 원하면 별도 리네이밍이 필요합니다.
-- `.mcp.json`의 `GVSKB_MODE`(offline/online)는 기관 망 환경에 맞춰 직접 설정해야 합니다.
+- `.mcp.json`의 `GVSKB_MODE`는 `${GVSKB_MODE:-online}`로 되어 있어 **기본값은 online**(실시간
+  취약점 조회)입니다. 행정망처럼 실제로 인터넷이 막힌 폐쇄망이면 OS/셸 환경변수로
+  `GVSKB_MODE=offline`을 설정해 오프라인 인텔 번들(`closed-network.md` 참고)을 쓰게 하세요 —
+  `.mcp.json` 파일 자체를 고칠 필요는 없습니다. 실제로 온라인 환경인데 이 값을 안 건드리면
+  기본이 offline이던 이전 설정과 달리, 이제는 자동으로 최신 취약점 조회가 됩니다.
 
 ## Validation
 
